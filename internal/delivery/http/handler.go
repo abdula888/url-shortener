@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"url-shortener/internal/lib/response"
+	"url-shortener/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +33,6 @@ func NewRouter(usecase usecase) *gin.Engine {
 }
 
 func (h Handler) GetURL(c *gin.Context) {
-	//w := c.Writer
 	alias := c.Param("alias")
 	if alias == "" {
 		c.JSON(http.StatusBadRequest, response.Error("invalid request", 400))

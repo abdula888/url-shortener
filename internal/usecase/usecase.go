@@ -1,17 +1,17 @@
 package usecase
 
-import "url-shortener/internal/lib/random"
+import (
+	"time"
+	"url-shortener/internal/repository"
 
-type repository interface {
-	GetURL(alias string) (string, error)
-	SaveURL(alias, url string) (bool, error)
-}
+	"math/rand"
+)
 
 type Usecase struct {
-	repository
+	repository repository.Repository
 }
 
-func New(repo repository) *Usecase {
+func New(repo repository.Repository) *Usecase {
 	return &Usecase{
 		repo,
 	}
@@ -26,14 +26,24 @@ func (u *Usecase) GetURL(alias string) (string, error) {
 }
 
 func (u *Usecase) SaveURL(url string) (string, error) {
-	alias := random.NewRandomString(10)
-	aliasExists, err := u.repository.SaveURL(alias, url)
-	if aliasExists { // Если генератор ссылок выдал ссылку, которая уже есть в БД, пытаемся снова
-		u.SaveURL(url)
-	}
+	alias := newRandomString(10)
+	err := u.repository.SaveURL(alias, url)
 	if err != nil {
 		return "", err
 	}
 
 	return alias, nil
+}
+
+func newRandomString(size int) string {
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_")
+
+	b := make([]rune, size)
+	for i := range b {
+		b[i] = chars[rnd.Intn(len(chars))]
+	}
+
+	return string(b)
 }

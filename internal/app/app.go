@@ -3,7 +3,9 @@ package app
 import (
 	"url-shortener/internal/config"
 	"url-shortener/internal/delivery/http"
-	"url-shortener/internal/infrastructure/postgres/repository"
+	"url-shortener/internal/repository"
+	"url-shortener/internal/repository/inmem"
+	"url-shortener/internal/repository/postgres"
 	"url-shortener/internal/usecase"
 	"url-shortener/pkg/db/conn"
 	"url-shortener/pkg/db/migrate"
@@ -14,24 +16,29 @@ func Run(conf *config.Config) {
 	// Настройка уровня логирования
 	log := log.NewLogger(conf.LogLevel)
 
-	// Подключение к БД
-	db, err := conn.InitDB()
-	if err != nil {
-		log.Fatal("Failed to connect to the database:", err)
-	}
-	log.Info("Successfully connected to the database")
-	defer db.Close()
+	var repo repository.Repository
 
-	// Применение миграций
-	if err := migrate.RunMigrations(db); err != nil {
-		log.Fatal("Error applying migration: ", err)
+	if conf.DatabaseType == "inmem" {
+		repo = inmem.NewRepo()
+	} else {
+		// Подключение к БД
+		db, err := conn.InitDB()
+		if err != nil {
+			log.Fatal("Failed to connect to the database:", err)
+		}
+		log.Info("Successfully connected to the database")
+		defer db.Close()
+
+		// Применение миграций
+		if err := migrate.RunMigrations(db); err != nil {
+			log.Fatal("Error applying migration: ", err)
+		}
+		log.Info("Migrations applied successfully")
+		repo = postgres.NewRepo(db)
 	}
-	log.Info("Migrations applied successfully")
 
 	// Регистрация маршрутов
-	r := http.NewRouter(usecase.New(
-		repository.New(db),
-	))
+	r := http.NewRouter(usecase.New(repo))
 	log.Info("Routes registered successfully")
 
 	// Запуск сервера
