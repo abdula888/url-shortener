@@ -18,7 +18,7 @@ func Run(conf *config.Config) {
 
 	var repo repository.Repository
 
-	if conf.DatabaseType == "inmem" {
+	if conf.StorageType == "inmem" {
 		repo = inmem.NewRepo()
 	} else {
 		// Подключение к БД
