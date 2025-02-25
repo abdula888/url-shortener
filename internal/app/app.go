@@ -6,15 +6,15 @@ import (
 	"url-shortener/internal/repository"
 	"url-shortener/internal/repository/inmem"
 	"url-shortener/internal/repository/postgres"
-	"url-shortener/internal/usecase"
+	"url-shortener/internal/usecase/impl"
 	"url-shortener/pkg/db/conn"
 	"url-shortener/pkg/db/migrate"
-	"url-shortener/pkg/log"
+	"url-shortener/pkg/log/logrus"
 )
 
 func Run(conf *config.Config) {
 	// Настройка уровня логирования
-	log := log.NewLogger(conf.LogLevel)
+	logger := logrus.NewLogger(conf.LogLevel)
 
 	var repo repository.Repository
 
@@ -22,26 +22,26 @@ func Run(conf *config.Config) {
 		repo = inmem.NewRepo()
 	} else {
 		// Подключение к БД
-		db, err := conn.InitDB()
+		db, err := conn.InitDB(conf.DatabaseURL)
 		if err != nil {
-			log.Fatal("Failed to connect to the database:", err)
+			logger.Fatal("Failed to connect to the database:", err)
 		}
-		log.Info("Successfully connected to the database")
+		logger.Info("Successfully connected to the database")
 		defer db.Close()
 
 		// Применение миграций
 		if err := migrate.RunMigrations(db); err != nil {
-			log.Fatal("Error applying migration: ", err)
+			logger.Fatal("Error applying migration: ", err)
 		}
-		log.Info("Migrations applied successfully")
+		logger.Info("Migrations applied successfully")
 		repo = postgres.NewRepo(db)
 	}
 
 	// Регистрация маршрутов
-	r := http.NewRouter(usecase.New(repo))
-	log.Info("Routes registered successfully")
+	r := http.NewRouter(impl.New(repo), logger)
+	logger.Info("Routes registered successfully")
 
 	// Запуск сервера
-	log.Info("Server started on port 8080")
-	log.Fatal(r.Run(":8080"))
+	logger.Info("Server started on port 8080")
+	logger.Fatal(r.Run(":8080"))
 }

@@ -1,10 +1,10 @@
-package usecase_test
+package impl_test
 
 import (
 	"errors"
 	"testing"
 	"url-shortener/internal/domain/entity"
-	"url-shortener/internal/usecase"
+	"url-shortener/internal/usecase/impl"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,7 +27,7 @@ func (m *MockRepository) SaveURL(urlEntity entity.URL) error {
 
 func TestGetURL(t *testing.T) {
 	mockRepo := new(MockRepository)
-	usecase := usecase.New(mockRepo)
+	usecase := impl.New(mockRepo)
 
 	t.Run("should return URL when alias exists", func(t *testing.T) {
 		mockRepo.On("GetURL", "shortAlias").Return("https://example.com", nil)
@@ -53,7 +53,7 @@ func TestGetURL(t *testing.T) {
 
 func TestSaveURL(t *testing.T) {
 	mockRepo := new(MockRepository)
-	usecase := usecase.New(mockRepo)
+	usecase := impl.New(mockRepo)
 
 	t.Run("should return alias when URL is saved successfully", func(t *testing.T) {
 		mockRepo.On("SaveURL", mock.AnythingOfType("string"), "https://example.com").Return(nil)

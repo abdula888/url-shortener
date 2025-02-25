@@ -2,11 +2,9 @@ package conn
 
 import (
 	"database/sql"
-	"os"
 )
 
-func InitDB() (*sql.DB, error) {
-	databaseURL := os.Getenv("DATABASE_URL")
+func InitDB(databaseURL string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		return nil, err
