@@ -1,6 +1,7 @@
 package inmem
 
 import (
+	"url-shortener/internal/domain/entity"
 	"url-shortener/pkg/response"
 )
 
@@ -14,20 +15,21 @@ func NewRepo() *Repository {
 	}
 }
 
-func (r *Repository) GetURL(alias string) (string, error) {
-	url, exists := r.urls[alias]
+func (r *Repository) GetURL(alias string) (entity.URL, error) {
+	originalURL, exists := r.urls[alias]
 	if !exists {
-		return "", response.ErrURLNotFound
+		return entity.URL{}, response.ErrURLNotFound
 	}
+	urlEntity := entity.URL{Alias: alias, OriginalURL: originalURL}
 
-	return url, nil
+	return urlEntity, nil
 }
-func (r *Repository) SaveURL(alias, url string) error {
-	if _, exists := r.urls[alias]; exists {
+func (r *Repository) SaveURL(urlEntity entity.URL) error {
+	if _, exists := r.urls[urlEntity.Alias]; exists {
 		return response.ErrURLExists
 	}
 
-	r.urls[alias] = url
+	r.urls[urlEntity.Alias] = urlEntity.OriginalURL
 
 	return nil
 }

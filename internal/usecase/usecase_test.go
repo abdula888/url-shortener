@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"errors"
 	"testing"
+	"url-shortener/internal/domain/entity"
 	"url-shortener/internal/usecase"
 
 	"github.com/stretchr/testify/assert"
@@ -13,13 +14,14 @@ type MockRepository struct {
 	mock.Mock
 }
 
-func (m *MockRepository) GetURL(alias string) (string, error) {
+func (m *MockRepository) GetURL(alias string) (entity.URL, error) {
 	args := m.Called(alias)
-	return args.String(0), args.Error(1)
+	urlEntity := entity.URL{Alias: alias, OriginalURL: args.String(0)}
+	return urlEntity, args.Error(1)
 }
 
-func (m *MockRepository) SaveURL(alias, url string) error {
-	args := m.Called(alias, url)
+func (m *MockRepository) SaveURL(urlEntity entity.URL) error {
+	args := m.Called(urlEntity)
 	return args.Error(0)
 }
 

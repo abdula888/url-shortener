@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"time"
+	"url-shortener/internal/domain/entity"
 	"url-shortener/internal/repository"
 
 	"math/rand"
@@ -18,16 +19,17 @@ func New(repo repository.Repository) *Usecase {
 }
 
 func (u *Usecase) GetURL(alias string) (string, error) {
-	url, err := u.repository.GetURL(alias)
+	urlEntity, err := u.repository.GetURL(alias)
 	if err != nil {
 		return "", err
 	}
-	return url, nil
+	return urlEntity.OriginalURL, nil
 }
 
-func (u *Usecase) SaveURL(url string) (string, error) {
+func (u *Usecase) SaveURL(originalURL string) (string, error) {
 	alias := newRandomString(10)
-	err := u.repository.SaveURL(alias, url)
+	urlEntity := entity.URL{Alias: alias, OriginalURL: originalURL}
+	err := u.repository.SaveURL(urlEntity)
 	if err != nil {
 		return "", err
 	}

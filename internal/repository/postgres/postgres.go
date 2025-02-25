@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"log"
+	"url-shortener/internal/domain/entity"
 	"url-shortener/pkg/response"
 
 	"github.com/lib/pq"
@@ -18,27 +19,29 @@ func NewRepo(db *sql.DB) *Repository {
 	}
 }
 
-func (r *Repository) GetURL(alias string) (string, error) {
+func (r *Repository) GetURL(alias string) (entity.URL, error) {
 	stmt, err := r.db.Prepare("SELECT url FROM url WHERE alias = $1")
 	if err != nil {
-		return "", err
+		return entity.URL{}, err
 	}
-	var resURL string
+	var originalURL string
 
-	err = stmt.QueryRow(alias).Scan(&resURL)
+	err = stmt.QueryRow(alias).Scan(&originalURL)
 	if err != nil {
-		return "", response.ErrURLNotFound
+		return entity.URL{}, response.ErrURLNotFound
 	}
-	return resURL, nil
+	urlEntity := entity.URL{Alias: alias, OriginalURL: originalURL}
+
+	return urlEntity, nil
 }
-func (r *Repository) SaveURL(alias, url string) error {
+func (r *Repository) SaveURL(urlEntity entity.URL) error {
 	stmt, err := r.db.Prepare("INSERT INTO url(alias, url) VALUES($1, $2)")
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	err = stmt.QueryRow(alias, url).Err()
+	err = stmt.QueryRow(urlEntity.Alias, urlEntity.OriginalURL).Err()
 	if err != nil {
 		// Проверка ошибки на уникальность поля
 		if pqErr, ok := err.(*pq.Error); ok {
